@@ -8,8 +8,11 @@ def run():
     logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
     logging.debug('App Starting up')
     genre_colors = helpers.get_config('Colors')
+    last_creds = helpers.get_config('Last_fm')
     logging.info('Genre Colors are: '+str(genre_colors))
-    lastfm.get_now_playing()
+    network = lastfm.LastFM(last_creds['user'], last_creds['api_key'], genre_colors)
+    current = network.get_now_playing()
+    logging.info(type(current))
 
 
 if __name__ == '__main__':

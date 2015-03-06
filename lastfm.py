@@ -123,45 +123,46 @@ class Track(object):
 
         return self._get_tags(pay_load)
 
+class LastFM(object):
+    """Create a LastFM connection"""
+    def __init__(self, user, api_key, genre_colors):
+        """Accepts user name, api key, and a dictionary of genre color key 
+           value pairs."""
+        self._user = user
+        self._api_key = api_key
+        self._genre_colors = genre_colors
 
-def get_now_playing():
-    # get the config for the last fm section
-    config = helpers.get_config('Last_fm')
 
-    # try and get the username and password and log error if it's not working
-    try:
-        user = config['user']
-        api_key = config['api_key']
-    except KeyError:
-        logging.error('User name or api_key invalid.')
+    def get_now_playing(self):
+        """Returns a lastfm.Track object of the most recently played track.
+           use LastFM.is_playing to see if it's currently playing or not"""
+        # create requests url params payload
+        pay_load = {'method': 'user.getrecenttracks',
+                    'user': self._user,
+                    'api_key': self._api_key,
+                    'format': 'json'}
 
-    # create requests url params payload
-    pay_load = {'method': 'user.getrecenttracks',
-                'user': user,
-                'api_key': api_key,
-                'format': 'json'}
+        # request the recent tracks
+        r = requests.get('http://ws.audioscrobbler.com/2.0/', params=pay_load)
 
-    # request the recent tracks
-    r = requests.get('http://ws.audioscrobbler.com/2.0/', params=pay_load)
+        # format into dictionary
+        json_response = r.json()
 
-    # format into dictionary
-    json_response = r.json()
+        # try and pick out the most recent track
+        try:
+            most_recent = json_response['recenttracks']['track'][0]
+            logging.debug('Recent Track Found')
+        except KeyError as e:
+            logging.error('Error, recent track can not be found.', e)
+            logging.debug('No recent track found.')
+            most_recent = None
 
-    # try and pick out the most recent track
-    try:
-        most_recent = json_response['recenttracks']['track'][0]
-        logging.debug('Recent Track Found')
-    except KeyError as e:
-        logging.error('Error, recent track can not be found.', e)
-        logging.debug('No recent track found.')
-        most_recent = None
-
-    # check to see if it's playing
-    if most_recent.get('@attr'):
-        if most_recent.get('@attr').get('nowplaying') == 'true':
-            logging.info('Now Playing: {0} - {1}'.format(most_recent['name'],
-                         most_recent['artist']['#text']))
+        # check to see if it's playing
+        if most_recent:
+            most_recent = Track(most_recent, self._api_key)
+            logging.info('Now Playing: {0} - {1}'.format(most_recent.title,
+                          most_recent.artist))
             return most_recent
-    else:
-        logging.info('Music not currently playing.')
-        return None
+        else:
+            logging.info('Music not currently playing.')
+            return Nones
