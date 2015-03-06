@@ -1,6 +1,5 @@
 import logging
 import requests
-import helpers
 
 
 class Track(object):
@@ -55,7 +54,7 @@ class Track(object):
 
     def _get_tags(self, pay_load):
         """Actually gets the tags"""
-        l=[]
+        l = []
         # request url and format into dictionary
         r = requests.get('http://ws.audioscrobbler.com/2.0/', params=pay_load)
         json = r.json()
@@ -138,23 +137,23 @@ class Track(object):
     def color(self):
         """Returns a color from the defined color genre configurations."""
         l = []
-        if self.get_artist_tags() != None:
-            for tag in self.get_artist_tags():
+        tags = self.get_artist_tags()
+        if tags != None:
+            for tag in tags:
                 if tag.lower() in self._list_color_genres():
                     l.append(tag.lower())
-        
+
         return self._genre_colors[l[0]]
 
 
 class LastFM(object):
     """Create a LastFM connection"""
     def __init__(self, user, api_key, genre_colors):
-        """Accepts user name, api key, and a dictionary of genre color key 
+        """Accepts user name, api key, and a dictionary of genre color key
            value pairs."""
         self._user = user
         self._api_key = api_key
         self._genre_colors = genre_colors
-
 
     def get_now_playing(self):
         """Returns a lastfm.Track object of the most recently played track.
@@ -184,8 +183,8 @@ class LastFM(object):
         if most_recent:
             most_recent = Track(most_recent, self._api_key, self._genre_colors)
             logging.info('Now Playing: {0} - {1}'.format(most_recent.title,
-                          most_recent.artist))
+                                                         most_recent.artist))
             return most_recent
         else:
             logging.info('Music not currently playing.')
-            return Nones
+            return None
