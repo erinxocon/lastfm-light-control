@@ -48,37 +48,80 @@ class Track(object):
         # private var
         self._api_key = api_key
 
+    def _get_tags(self, pay_load):
+        """Actually gets the tags"""
+        # request url and format into dictionary
+        r = requests.get('http://ws.audioscrobbler.com/2.0/', params=pay_load)
+        json = r.json()
+
+        # check to see if the response was an error else no none and log error
+        if 'error' not in json.keys():
+            try:
+                return json['toptags']['tag']
+            except KeyError:
+                logging.error('Empty tag list')
+                return None
+        else:
+            logging.info('No Tags Found')
+            logging.error('Error_Code: {0}. Message: {1}.'.format(
+                            json.get('error'), json.get('message')))
+            return None
+
     def get_track_tags(self):
         """Returns a sorted list of track tags.  Will try and use the tracks
            mbid (music brainz id), otherwise it will use title and artist"""
         # check to see if there is a music braiz id
         if self.track_mbid:
-            url = ('http://ws.audioscrobbler.com/2.0/'
-                   '?method=track.gettoptags'
-                   '&mbid=' + self.track_mbid +
-                   '&api_key='+self._api_key +
-                   '&format=json')
+            pay_load = {'method': 'track.gettoptags',
+                        'mbid': self.track_mbid,
+                        'api_key': self._api_key,
+                        'format': 'json'}
         # if no mbid, use artist and title for api call
         else:
-            url = ('http://ws.audioscrobbler.com/2.0/'
-                   '?method=track.gettoptags'
-                   '&artist=' + self.artist +
-                   '&track=' + self.title +
-                   '&api_key=' + self._api_key +
-                   '&format=json')
+            pay_load = {'method': 'track.gettoptags',
+                        'artist=': self.artist,
+                        'track': self.title,
+                        'api_key': self._api_key,
+                        'format': 'json'}
 
-        # request url and format into dictionary
-        r = requests.get(url)
-        json = r.json()
+        return self._get_tags(pay_load)
 
-        # check to see if the response was an error else no none and log error
-        if 'error' not in json.keys():
-            return json['toptags']['tag']
+    def get_album_tags(self):
+        """Returns a sorted list of album tags.  Will try and use the album
+           mbid (music braiz id), otherwuse it will use album, and artist"""
+        # check to see if there is a music braiz id
+        if self.album_mbid:
+            pay_load = {'method': 'album.gettoptags',
+                        'mbid': self.album_mbid,
+                        'api_key': self._api_key,
+                        'format': 'json'}
+        # if no mbid, use artist and title for api call
         else:
-            logging.info('No Tags Found')
-            logging.error('Error_Code: {1}. Message: {2}.'.format(
-                         json.get('error'), json.get('message')))
-            return None
+            pay_load = {'method': 'album.gettoptags',
+                        'artist=': self.artist,
+                        'album': self.album,
+                        'api_key': self._api_key,
+                        'format': 'json'}
+
+        return self._get_tags(pay_load)
+
+    def get_artist_tags(self):
+        """Returns a sorted list of artist tags.  Will try and use the album
+           mbid (music braiz id), otherwuse it will use artist"""
+        # check to see if there is a music braiz id
+        if self.artist_mbid:
+            pay_load = {'method': 'artist.gettoptags',
+                        'mbid': self.artist_mbid,
+                        'api_key': self._api_key,
+                        'format': 'json'}
+        # if no mbid, use artist and title for api call
+        else:
+            pay_load = {'method': 'artist.gettoptags',
+                        'artist=': self.artist,
+                        'api_key': self._api_key,
+                        'format': 'json'}
+
+        return self._get_tags(pay_load)
 
 
 def get_now_playing():
@@ -92,12 +135,14 @@ def get_now_playing():
     except KeyError:
         logging.error('User name or api_key invalid.')
 
+    # create requests url params payload
+    pay_load = {'method': 'user.getrecenttracks',
+                'user': user,
+                'api_key': api_key,
+                'format': 'json'}
+
     # request the recent tracks
-    r = requests.get('http://ws.audioscrobbler.com/2.0/'
-                     '?method=user.getrecenttracks'
-                     '&user=' + user +
-                     '&api_key=' + api_key +
-                     '&format=json')
+    r = requests.get('http://ws.audioscrobbler.com/2.0/', params=pay_load)
 
     # format into dictionary
     json_response = r.json()
