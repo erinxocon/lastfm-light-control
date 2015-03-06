@@ -139,7 +139,7 @@ class Track(object):
         """Returns a color from the defined color genre configurations."""
         l = []
         if self.get_artist_tags() != None:
-            for tag in self.get_track_tags():
+            for tag in self.get_artist_tags():
                 if tag.lower() in self._list_color_genres():
                     l.append(tag.lower())
         

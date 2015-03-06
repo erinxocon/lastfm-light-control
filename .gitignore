@@ -53,8 +53,9 @@ docs/_build/
 # PyBuilder
 target/
 
-*.ini
+*.config
 
 .DS_Store
 
 *.suo
+settings.config
