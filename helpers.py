@@ -2,9 +2,10 @@ import ConfigParser
 import logging
 
 
-def getConfig(section):
+def get_config(section):
+    """reutns a dictionary for a section in the config"""
     config = ConfigParser.ConfigParser()
-    config.read('Config.ini')
+    config.read('settings.config')
     dict1 = {}
     options = config.options(section)
     for option in options:

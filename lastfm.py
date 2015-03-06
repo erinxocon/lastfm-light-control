@@ -126,7 +126,7 @@ class Track(object):
 
 def get_now_playing():
     # get the config for the last fm section
-    config = helpers.getConfig('Last_fm')
+    config = helpers.get_config('Last_fm')
 
     # try and get the username and password and log error if it's not working
     try:
