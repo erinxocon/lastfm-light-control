@@ -12,7 +12,8 @@ def run():
     logging.info('Genre Colors are: '+str(genre_colors))
     network = lastfm.LastFM(last_creds['user'], last_creds['api_key'], genre_colors)
     current = network.get_now_playing()
-    logging.info(type(current))
+    print(current.get_track_tags())
+    print(current.color())
 
 
 if __name__ == '__main__':

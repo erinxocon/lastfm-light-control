@@ -7,7 +7,7 @@ class Track(object):
     """Converts last.fm json response into a nice little object for easy
        querying.  Returns all information about tags, color, artist, and title.
     """
-    def __init__(self, lastfm_track, api_key):
+    def __init__(self, lastfm_track, api_key, genre_colors):
         """Set public and private variables"""
         # public vars
         try:
@@ -47,9 +47,15 @@ class Track(object):
 
         # private var
         self._api_key = api_key
+        self._genre_colors = genre_colors
+
+    def _list_color_genres(self):
+        """Return a list of genres from the configuration file for matching."""
+        return map(str.lower, self._genre_colors.keys())
 
     def _get_tags(self, pay_load):
         """Actually gets the tags"""
+        l=[]
         # request url and format into dictionary
         r = requests.get('http://ws.audioscrobbler.com/2.0/', params=pay_load)
         json = r.json()
@@ -57,10 +63,16 @@ class Track(object):
         # check to see if the response was an error else no none and log error
         if 'error' not in json.keys():
             try:
-                return json['toptags']['tag']
+                tag_list = json['toptags']['tag']
             except KeyError:
                 logging.error('Empty tag list')
                 return None
+
+            for tag in tag_list:
+                l.append(tag.get('name'))
+
+            return l
+
         else:
             logging.info('No Tags Found')
             logging.error('Error_Code: {0}. Message: {1}.'.format(
@@ -123,6 +135,17 @@ class Track(object):
 
         return self._get_tags(pay_load)
 
+    def color(self):
+        """Returns a color from the defined color genre configurations."""
+        l = []
+        if self.get_artist_tags() != None:
+            for tag in self.get_track_tags():
+                if tag.lower() in self._list_color_genres():
+                    l.append(tag.lower())
+        
+        return self._genre_colors[l[0]]
+
+
 class LastFM(object):
     """Create a LastFM connection"""
     def __init__(self, user, api_key, genre_colors):
@@ -159,7 +182,7 @@ class LastFM(object):
 
         # check to see if it's playing
         if most_recent:
-            most_recent = Track(most_recent, self._api_key)
+            most_recent = Track(most_recent, self._api_key, self._genre_colors)
             logging.info('Now Playing: {0} - {1}'.format(most_recent.title,
                           most_recent.artist))
             return most_recent
